@@ -13,6 +13,7 @@ async def root():
     return {"message": "Hola, Dario!"}
 
 
+# Crear usuario
 @app.post("/users", response_model=User, tags=["Users"])
 async def create_user(user_data: UserCreate, session: SessionDep):
     user = User(**user_data.dict())
@@ -22,15 +23,25 @@ async def create_user(user_data: UserCreate, session: SessionDep):
     return user
 
 
+# Listar a todos los usuarios
 @app.get("/users/", response_model=list[User], tags=["Users"])
 async def list_users(session: SessionDep):
     users = session.query(User).all()
     return users
 
 
+# Buscar a usuario con id especifico
 @app.get("/users/{id}", response_model=User, tags=["Users"])
 async def get_user(id: int, session: SessionDep):
     user = session.query(User).filter(User.id == id).first()
+    return user
+
+
+@app.delete("/users/{id}", response_model=User, tags=["Users"])
+async def delete_user(id: int, session: SessionDep):
+    user = session.query(User).filter(User.id == id).first()
+    session.delete(user)
+    session.commit()
     return user
 
 
