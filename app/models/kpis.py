@@ -13,5 +13,5 @@ class KpiCreate(BaseModel):
     pass
 
 
-class Kpi(BaseModel):
+class Kpi(KpiBase):
     id: int | None = None

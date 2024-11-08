@@ -14,7 +14,16 @@ async def root():
 @app.post("/users", response_model=User, tags=["Users"])
 async def create_user(user_data: UserCreate):
     user = User.model_validate(user_data.model_dump())
+    db_users.append(user)
     return user
+
+
+db_users: list[User] = []
+
+
+@app.get("/users/", response_model=list[User], tags=["Users"])
+async def list_users():
+    return db_users
 
 
 @app.get("/users/{id}", response_model=User, tags=["Users"])
