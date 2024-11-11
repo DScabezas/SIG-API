@@ -1,6 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
-from .table import Table
 
 
 class KpiBase(SQLModel):
@@ -10,5 +9,8 @@ class KpiBase(SQLModel):
 
 class Kpi(KpiBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    tabla_id: int = Field(foreign_key="tabla.id")
-    tabla: "Table" = Relationship(back_populates="kpis")
+    catalogo_id: int = Field(foreign_key="catalogo.id")
+
+    catalogo: "Catalogo" = Relationship(
+        back_populates="kpis"
+    )  # Relación inversa con Catalogo

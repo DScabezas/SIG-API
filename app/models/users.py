@@ -1,15 +1,23 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional
-from .board import Board
-from .boards import Boards
+from typing import List, Optional
+from app.models.dashboards import Dashboard
+from app.models.catalogs import Catalogo
+
+
+from sqlmodel import SQLModel, Field, Relationship
+from typing import List, Optional
 
 
 class UserBase(SQLModel):
-    name: str = Field(default=None)
-    description: str = Field(default=None)
-    email: str = Field(default=None)
+    name: str
+    description: str
+    email: str
 
 
-class User(SQLModel, table=True):
+class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    boards: list[Board] = Relationship(back_populates="users", link_model=Boards)
+    dashboards: List["Dashboard"] = Relationship(back_populates="user")
+    catalogos: List["Catalogo"] = Relationship(
+        back_populates="user"
+    )  # Relación con Catalogo
+    boards: List["Board"] = Relationship(back_populates="user")  # Relación con Board
