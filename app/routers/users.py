@@ -1,4 +1,5 @@
-from app.models.users import User, UserCreate, UserUpdate
+from app.models.users import User
+from app.schemas.users import UserCreate, UserUpdate
 from app.db import SessionDep
 from fastapi import APIRouter, status, HTTPException
 from sqlmodel import select

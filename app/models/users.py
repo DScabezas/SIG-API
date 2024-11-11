@@ -10,14 +10,6 @@ class UserBase(SQLModel):
     email: str = Field(default=None)
 
 
-class UserCreate(UserBase):
-    pass
-
-
-class UserUpdate(UserBase):
-    pass
-
-
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     boards: list[Board] = Relationship(back_populates="users", link_model=Boards)
