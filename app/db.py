@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from typing import Annotated
-
 from fastapi import Depends
 from sqlmodel import Session, create_engine, SQLModel
 
