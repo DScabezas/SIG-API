@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
-from app.models.boardusers import BoardUsers
 from app.models.dboards import DBoards
 from app.models.boards import Board, BoardBase
 from app.models.dashboards import Dashboard
@@ -10,43 +9,54 @@ from app.db import SessionDep
 router = APIRouter()
 
 
-@router.post(
-    "/boards/",
-    response_model=Board,
-    status_code=status.HTTP_201_CREATED,
-    tags=["Boards"],
-)
-def create_board(user_ids: list[int], board_data: BoardBase, session: SessionDep):
+@router.post("/boards/", response_model=Board, tags=["Boards"])
+def create_board(user_id: int, dashboard_id: int, name: str, session: SessionDep):
     """
-    Crea un nuevo board y lo asocia a los usuarios y dashboards especificados.
+    Crea un nuevo board y lo asocia a un usuario y su dashboard correspondiente.
 
-    - **user_ids**: Lista de IDs de usuarios a asociar con el board.
-    - **board_data**: Datos del board a crear.
+    - **user_id**: ID del usuario que va a ser asociado con el board.
+    - **dashboard_id**: ID del dashboard que va a ser asociado con el board.
+    - **name**: Nombre del board a crear.
     - **session**: Sesión de base de datos.
 
-    Valida que los usuarios existan y que tengan un dashboard asociado.
-    Si alguno de los usuarios no existe o no tiene un dashboard, se devuelve un error.
+    Valida que el usuario exista y que el dashboard pertenece al usuario.
+    Si el usuario o dashboard no se encuentran, se lanza una excepción.
     """
-    users = session.exec(select(User).where(User.id.in_(user_ids))).all()
-    if len(users) != len(user_ids):
+    user = session.exec(select(User).where(User.id == user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    dashboard = session.exec(
+        select(Dashboard).where(
+            Dashboard.id == dashboard_id, Dashboard.user_id == user_id
+        )
+    ).first()
+    if not dashboard:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Some users not found"
         )
 
+    dashboards = session.exec(
+        select(Dashboard).where(Dashboard.user_id.in_(user_ids))
+    ).all()
+
+    dashboards_dict = {dashboard.user_id: dashboard for dashboard in dashboards}
+
+    for user_id in user_ids:
+        if user_id not in dashboards_dict:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User {user_id} has no dashboard",
+            )
+
     board = Board(name=board_data.name)
+
     session.add(board)
     session.commit()
     session.refresh(board)
 
     for user_id in user_ids:
-        dashboard = session.exec(
-            select(Dashboard).join(DBoards).where(DBoards.user_id == user_id)
-        ).first()
-        if not dashboard:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User {user_id} has no dashboard",
-            )
+        dashboard = dashboards_dict[user_id]
 
         session.add(
             DBoards(board_id=board.id, dashboard_id=dashboard.id, user_id=user_id)
@@ -64,12 +74,12 @@ def create_board(user_ids: list[int], board_data: BoardBase, session: SessionDep
 )
 def get_board(board_id: int, session: SessionDep):
     """
-    Obtiene los detalles de un board específico por su ID.
+    Obtiene la información de un board específico.
 
-    - **board_id**: ID del board a recuperar.
+    - **board_id**: ID del board que se desea obtener.
     - **session**: Sesión de base de datos.
 
-    Devuelve un error 404 si el board no se encuentra.
+    Si el board no existe, se lanza una excepción.
     """
     board = session.exec(select(Board).where(Board.id == board_id)).first()
     if not board:
@@ -79,21 +89,16 @@ def get_board(board_id: int, session: SessionDep):
     return board
 
 
-@router.put(
-    "/boards/{board_id}",
-    response_model=Board,
-    status_code=status.HTTP_200_OK,
-    tags=["Boards"],
-)
-def update_board(board_id: int, name: str, session: SessionDep):
+@router.put("/boards/{board_id}", response_model=Board, tags=["Boards"])
+def update_board(board_id: int, session: SessionDep):
     """
-    Actualiza el nombre de un board existente.
+    Actualiza un board existente.
 
-    - **board_id**: ID del board a actualizar.
-    - **name**: Nuevo nombre del board.
+    - **board_id**: ID del board que se desea actualizar.
     - **session**: Sesión de base de datos.
 
-    Devuelve un error 404 si el board no se encuentra.
+    Si el board no existe, se lanza una excepción. Después de la actualización,
+    se devuelve el board modificado.
     """
     db_board = session.exec(select(Board).where(Board.id == board_id)).first()
     if not db_board:
@@ -112,12 +117,13 @@ def update_board(board_id: int, name: str, session: SessionDep):
 )
 def delete_board(board_id: int, session: SessionDep):
     """
-    Elimina un board por su ID.
+    Elimina un board existente.
 
-    - **board_id**: ID del board a eliminar.
+    - **board_id**: ID del board que se desea eliminar.
     - **session**: Sesión de base de datos.
 
-    Devuelve un error 404 si el board no se encuentra.
+    Si el board no existe, se lanza una excepción. Una vez eliminado, se
+    devuelve un mensaje de éxito.
     """
     db_board = session.exec(select(Board).where(Board.id == board_id)).first()
     if not db_board:
