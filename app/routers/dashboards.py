@@ -28,13 +28,16 @@ def create_dashboard(user_id: int, session: SessionDep) -> Dashboard:
     """
     user_exists = session.exec(select(User).where(User.id == user_id)).first()
     if not user_exists:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
 
     existing_dashboard = session.exec(
         select(Dashboard).where(Dashboard.user_id == user_id)
     ).first()
     if existing_dashboard:
-        raise HTTPException(status_code=400, detail="User already has a dashboard")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already has a dashboard",
+        )
 
     dashboard = Dashboard(user_id=user_id)
     session.add(dashboard)
@@ -44,26 +47,28 @@ def create_dashboard(user_id: int, session: SessionDep) -> Dashboard:
     return dashboard
 
 
-@router.get("/dashboards/{user_id}", response_model=Dashboard, tags=["Dashboards"])
-def get_dashboard(user_id: int, session: SessionDep) -> Dashboard:
+@router.get(
+    "/user/{user_id}/dashboard",
+    response_model=Dashboard,
+    status_code=status.HTTP_200_OK,
+    tags=["Dashboards"],
+)
+def get_user_dashboard(user_id: int, session: SessionDep):
     """
-    Obtiene el dashboard de un usuario por su ID.
-
-    - **user_id**: ID del usuario cuyo dashboard se desea obtener.
-    - **session**: Dependencia de la sesión de base de datos.
-
-    Realiza una consulta para obtener el dashboard asociado al usuario especificado.
-    Si el usuario no tiene un dashboard, lanza una excepción 404.
-
-    Retorna el dashboard encontrado o una excepción 404 si no se encuentra.
+    Obtiene el Dashboard de un Usuario.
     """
-    dashboard = session.exec(
-        select(Dashboard)
-        .join(User, Dashboard.user_id == User.id)
-        .where(User.id == user_id)
-    ).first()
+    user = session.exec(select(User).where(User.id == user_id)).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    dashboard = user.dashboard  # El dashboard está relacionado con el usuario
     if not dashboard:
-        raise HTTPException(status_code=404, detail="Dashboard not found for this user")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found"
+        )
+
     return dashboard
 
 

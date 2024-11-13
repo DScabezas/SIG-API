@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, status
 from app.db import SessionDep
 from sqlmodel import select
+from app.models.boardusers import BoardUsers
 from app.models.users import User, UserBase
 from app.schemas.users import UserUpdate
+from app.models.boards import Board
 
 router = APIRouter()
 
@@ -111,3 +113,26 @@ def delete_user(user_id: int, session: SessionDep):
     session.delete(db_user)
     session.commit()
     return {"message": "User deleted successfully"}
+
+
+@router.get(
+    "/board/{board_id}/users",
+    response_model=list[User],
+    status_code=status.HTTP_200_OK,
+    tags=["Users", "Dashboards"],
+)
+def get_board_users(board_id: int, session: SessionDep):
+    """
+    Obtiene todos los usuarios admitidos para un Board específico.
+    """
+    board = session.exec(select(Board).where(Board.id == board_id)).first()
+    if not board:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Board not found"
+        )
+
+    # Obtener todos los usuarios admitidos en el Board
+    users = session.exec(
+        select(User).join(BoardUsers).where(BoardUsers.board_id == board_id)
+    ).all()
+    return users

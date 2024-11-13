@@ -1,5 +1,6 @@
-from sqlmodel import SQLModel, Field
-from typing import Optional
+from sqlmodel import SQLModel, Field, Relationship
+from typing import Optional, List
+from app.models.boardusers import BoardUsers  # Importar la tabla intermedia
 
 
 class UserBase(SQLModel):
@@ -10,3 +11,8 @@ class UserBase(SQLModel):
 
 class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
+
+    dashboard: "Dashboard" = Relationship(
+        back_populates="user", sa_relationship_kwargs={"uselist": False}
+    )
+    boards: List["Board"] = Relationship(back_populates="users", link_model=BoardUsers)
