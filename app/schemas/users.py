@@ -1,18 +1,7 @@
-from pydantic import BaseModel
 from typing import Optional
-
-
-class UserBase(BaseModel):
-    name: str
-    description: str
-    email: str
-
-
-class UserCreate(UserBase):
-    pass
+from sqlmodel import SQLModel
+from ..models.users import UserBase
 
 
 class UserUpdate(UserBase):
-    name: Optional[str]
-    description: Optional[str]
-    email: Optional[str]
+    pass
