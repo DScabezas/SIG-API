@@ -119,7 +119,7 @@ def delete_user(user_id: int, session: SessionDep):
     "/board/{board_id}/users",
     response_model=list[User],
     status_code=status.HTTP_200_OK,
-    tags=["Users", "Dashboards"],
+    tags=["Users", "Boards"],
 )
 def get_board_users(board_id: int, session: SessionDep):
     """

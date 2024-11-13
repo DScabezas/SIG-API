@@ -15,3 +15,7 @@ class Board(BoardBase, table=True):
     dashboards: List["Dashboard"] = Relationship(
         back_populates="boards", link_model=DBoards
     )
+
+
+class CreateBoardRequest(BoardBase):
+    user_ids: List[int]
