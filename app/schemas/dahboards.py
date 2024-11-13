@@ -1,7 +1,7 @@
-from typing import List
-from ..models.boards import Board
-from ..models.dashboards import DashboardBase
+from app.models.boards import Board
+from app.models.dashboards import DashboardBase
 
 
 class DashboardRead(DashboardBase):
-    boards: List[Board] = []
+    id: int
+    boards: list[Board] = []
