@@ -1,68 +1,57 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.models.dboards import DBoards
-from app.models.boards import Board, BoardBase
+from app.models.boards import Board, CreateBoardRequest
 from app.models.dashboards import Dashboard
 from app.models.users import User
+from app.models.boardusers import BoardUsers
 from app.db import SessionDep
 
 router = APIRouter()
 
 
 @router.post("/boards/", response_model=Board, tags=["Boards"])
-def create_board(user_id: int, dashboard_id: int, name: str, session: SessionDep):
+def create_board(request: CreateBoardRequest, session: SessionDep):
     """
-    Crea un nuevo board y lo asocia a un usuario y su dashboard correspondiente.
+    Crea un nuevo board y lo asocia a una lista de usuarios y sus dashboards correspondientes.
 
-    - **user_id**: ID del usuario que va a ser asociado con el board.
-    - **dashboard_id**: ID del dashboard que va a ser asociado con el board.
+    - **user_ids**: Lista de IDs de usuarios que van a ser asociados con el board.
     - **name**: Nombre del board a crear.
     - **session**: Sesión de base de datos.
 
-    Valida que el usuario exista y que el dashboard pertenece al usuario.
-    Si el usuario o dashboard no se encuentran, se lanza una excepción.
+    Valida que cada usuario exista y que cada uno tenga su dashboard.
+    Si algún usuario o dashboard no se encuentra, se lanza una excepción.
     """
-    user = session.exec(select(User).where(User.id == user_id)).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Verificar que todos los usuarios existan
+    users = session.exec(select(User).where(User.id.in_(request.user_ids))).all()
+    if len(users) != len(request.user_ids):
+        raise HTTPException(status_code=404, detail="One or more users not found")
 
-    dashboard = session.exec(
-        select(Dashboard).where(
-            Dashboard.id == dashboard_id, Dashboard.user_id == user_id
-        )
-    ).first()
-    if not dashboard:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Some users not found"
-        )
-
+    # Obtener los dashboards de los usuarios
     dashboards = session.exec(
-        select(Dashboard).where(Dashboard.user_id.in_(user_ids))
+        select(Dashboard).where(Dashboard.user_id.in_(request.user_ids))
     ).all()
 
-    dashboards_dict = {dashboard.user_id: dashboard for dashboard in dashboards}
+    # Verificar que cada usuario tenga su propio dashboard
+    if len(dashboards) != len(request.user_ids):
+        raise HTTPException(status_code=404, detail="Some users have no dashboard")
 
-    for user_id in user_ids:
-        if user_id not in dashboards_dict:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User {user_id} has no dashboard",
-            )
-
-    board = Board(name=board_data.name)
-
+    # Crear el board
+    board = Board(name=request.name)
     session.add(board)
     session.commit()
     session.refresh(board)
 
-    for user_id in user_ids:
-        dashboard = dashboards_dict[user_id]
-
+    # Registrar las relaciones en DBoards y BoardUsers
+    for user in users:
+        dashboard = next(d for d in dashboards if d.user_id == user.id)
         session.add(
-            DBoards(board_id=board.id, dashboard_id=dashboard.id, user_id=user_id)
+            DBoards(board_id=board.id, dashboard_id=dashboard.id, user_id=user.id)
         )
+        session.add(BoardUsers(board_id=board.id, user_id=user.id))
 
     session.commit()
+
     return board
 
 
