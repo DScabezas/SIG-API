@@ -3,7 +3,11 @@ from typing import List, Optional
 from app.models.dboards import DBoards
 
 
-class Dashboard(SQLModel, table=True):
+class DashboardBase(SQLModel):
+    user_id: int = Field(foreign_key="user.id")
+
+
+class Dashboard(DashboardBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
 

@@ -1,12 +1,14 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List
+from typing import List, Optional
 from app.models.dboards import DBoards
 
 
-class Board(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(nullable=False)
+class BoardBase(SQLModel):
+    name: str
 
+
+class Board(BoardBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
     dashboards: List["Dashboard"] = Relationship(
         back_populates="boards", link_model=DBoards
     )
