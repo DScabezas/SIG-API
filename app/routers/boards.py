@@ -22,27 +22,22 @@ def create_board(request: CreateBoardRequest, session: SessionDep):
     Valida que cada usuario exista y que cada uno tenga su dashboard.
     Si algún usuario o dashboard no se encuentra, se lanza una excepción.
     """
-    # Verificar que todos los usuarios existan
     users = session.exec(select(User).where(User.id.in_(request.user_ids))).all()
     if len(users) != len(request.user_ids):
         raise HTTPException(status_code=404, detail="One or more users not found")
 
-    # Obtener los dashboards de los usuarios
     dashboards = session.exec(
         select(Dashboard).where(Dashboard.user_id.in_(request.user_ids))
     ).all()
 
-    # Verificar que cada usuario tenga su propio dashboard
     if len(dashboards) != len(request.user_ids):
         raise HTTPException(status_code=404, detail="Some users have no dashboard")
 
-    # Crear el board
     board = Board(name=request.name)
     session.add(board)
     session.commit()
     session.refresh(board)
 
-    # Registrar las relaciones en DBoards y BoardUsers
     for user in users:
         dashboard = next(d for d in dashboards if d.user_id == user.id)
         session.add(
@@ -129,7 +124,7 @@ def delete_board(board_id: int, session: SessionDep):
     "/dashboard/{dashboard_id}/boards",
     response_model=list[Board],
     status_code=status.HTTP_200_OK,
-    tags=["Boards"],
+    tags=["Boards", "Dashboards"],
 )
 def get_dashboard_boards(dashboard_id: int, session: SessionDep):
     """
