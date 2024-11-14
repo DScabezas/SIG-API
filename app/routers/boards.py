@@ -1,49 +1,43 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
+from typing import List
 from app.models.dboards import DBoards
-from app.models.boards import Board, CreateBoardRequest
+from app.models.boards import Board
 from app.models.dashboards import Dashboard
 from app.models.users import User
-from app.models.boardusers import BoardUsers
 from app.db import SessionDep
+from app.schemas.boards import BoardCreate
 
 router = APIRouter()
 
 
 @router.post("/boards/", response_model=Board, tags=["Boards"])
-def create_board(request: CreateBoardRequest, session: SessionDep):
-    """
-    Crea un nuevo board y lo asocia a una lista de usuarios y sus dashboards correspondientes.
-
-    - **user_ids**: Lista de IDs de usuarios que van a ser asociados con el board.
-    - **name**: Nombre del board a crear.
-    - **session**: Sesión de base de datos.
-
-    Valida que cada usuario exista y que cada uno tenga su dashboard.
-    Si algún usuario o dashboard no se encuentra, se lanza una excepción.
-    """
-    users = session.exec(select(User).where(User.id.in_(request.user_ids))).all()
-    if len(users) != len(request.user_ids):
+def create_board(board_data: BoardCreate, session: SessionDep) -> Board:
+    # Verifica que los usuarios existan
+    users = session.exec(select(User).where(User.id.in_(board_data.user_ids))).all()
+    if len(users) != len(board_data.user_ids):
         raise HTTPException(status_code=404, detail="One or more users not found")
 
+    # Verifica que los usuarios tengan dashboards asociados
     dashboards = session.exec(
-        select(Dashboard).where(Dashboard.user_id.in_(request.user_ids))
+        select(Dashboard).where(Dashboard.user_id.in_(board_data.user_ids))
     ).all()
 
-    if len(dashboards) != len(request.user_ids):
+    if len(dashboards) != len(board_data.user_ids):
         raise HTTPException(status_code=404, detail="Some users have no dashboard")
 
-    board = Board(name=request.name)
+    # Crea el nuevo Board
+    board = Board(name=board_data.name)
     session.add(board)
     session.commit()
     session.refresh(board)
 
+    # Asocia los usuarios a los dashboards y el board
     for user in users:
         dashboard = next(d for d in dashboards if d.user_id == user.id)
         session.add(
             DBoards(board_id=board.id, dashboard_id=dashboard.id, user_id=user.id)
         )
-        session.add(BoardUsers(board_id=board.id, user_id=user.id))
 
     session.commit()
 
@@ -56,15 +50,7 @@ def create_board(request: CreateBoardRequest, session: SessionDep):
     status_code=status.HTTP_200_OK,
     tags=["Boards"],
 )
-def get_board(board_id: int, session: SessionDep):
-    """
-    Obtiene la información de un board específico.
-
-    - **board_id**: ID del board que se desea obtener.
-    - **session**: Sesión de base de datos.
-
-    Si el board no existe, se lanza una excepción.
-    """
+def get_board(board_id: int, session: SessionDep) -> Board:
     board = session.exec(select(Board).where(Board.id == board_id)).first()
     if not board:
         raise HTTPException(
@@ -99,16 +85,7 @@ def update_board(board_id: int, session: SessionDep):
 @router.delete(
     "/boards/{board_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Boards"]
 )
-def delete_board(board_id: int, session: SessionDep):
-    """
-    Elimina un board existente.
-
-    - **board_id**: ID del board que se desea eliminar.
-    - **session**: Sesión de base de datos.
-
-    Si el board no existe, se lanza una excepción. Una vez eliminado, se
-    devuelve un mensaje de éxito.
-    """
+def delete_board(board_id: int, session: SessionDep) -> None:
     db_board = session.exec(select(Board).where(Board.id == board_id)).first()
     if not db_board:
         raise HTTPException(
@@ -121,29 +98,19 @@ def delete_board(board_id: int, session: SessionDep):
 
 
 @router.get(
-    "/dashboard/{dashboard_id}/boards",
-    response_model=list[Board],
+    "/board/{board_id}/users",
+    response_model=List[User],
     status_code=status.HTTP_200_OK,
-    tags=["Boards", "Dashboards"],
+    tags=["Users", "Boards"],
 )
-def get_dashboard_boards(dashboard_id: int, session: SessionDep):
-    """
-    Obtiene todos los boards asociados a un dashboard específico.
-
-    - **dashboard_id**: ID del dashboard del que se quieren obtener los boards.
-    - **session**: Sesión de base de datos.
-
-    Devuelve un error 404 si el dashboard no se encuentra.
-    """
-    dashboard = session.exec(
-        select(Dashboard).where(Dashboard.id == dashboard_id)
-    ).first()
-    if not dashboard:
+def get_board_users(board_id: int, session: SessionDep) -> List[User]:
+    db_board = session.exec(select(Board).where(Board.id == board_id)).first()
+    if not db_board:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Board not found"
         )
 
-    boards = session.exec(
-        select(Board).join(DBoards).where(DBoards.dashboard_id == dashboard_id)
+    users = session.exec(
+        select(User).join(DBoards).where(DBoards.board_id == board_id)
     ).all()
-    return boards
+    return users

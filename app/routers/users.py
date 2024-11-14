@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 from app.db import SessionDep
 from sqlmodel import select
 from app.models.boards import Board
-from app.models.boardusers import BoardUsers
+from app.models.dboards import DBoards
 from app.models.users import User, UserBase
 from app.schemas.users import UserRead, UserUpdate
 
@@ -137,6 +137,6 @@ def get_board_users(board_id: int, session: SessionDep) -> List[User]:
         )
 
     db_boardusers = session.exec(
-        select(User).join(BoardUsers).where(BoardUsers.board_id == board_id)
+        select(User).join(DBoards).where(DBoards.board_id == board_id)
     ).all()
     return db_boardusers

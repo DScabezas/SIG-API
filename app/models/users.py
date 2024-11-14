@@ -1,7 +1,6 @@
-from sqlmodel import Relationship, SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from typing import List, Optional
-
-from app.models.boardusers import BoardUsers
+from app.models.dboards import DBoards
 
 
 class UserBase(SQLModel):
@@ -13,4 +12,4 @@ class UserBase(SQLModel):
 class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     dashboard: "Dashboard" = Relationship(back_populates="users")
-    boards: List["Board"] = Relationship(back_populates="users", link_model=BoardUsers)
+    boards: List["Board"] = Relationship(back_populates="users", link_model=DBoards)

@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/boards/{board_id}/catalogos",
+    "/boards/{board_id}/catalogs",
     response_model=Catalog,
     status_code=status.HTTP_201_CREATED,
     tags=["Catalogs"],
@@ -35,7 +35,7 @@ def create_catalogo(board_id: int, catalog: CatalogBase, session: SessionDep):
 
 
 @router.get(
-    "/catalogos",
+    "/catalogs",
     response_model=List[Catalog],
     status_code=status.HTTP_200_OK,
     tags=["Catalogs"],
@@ -48,7 +48,7 @@ def get_catalogos(session: SessionDep):
 
 
 @router.get(
-    "/boards/{board_id}/catalogos",
+    "/boards/{board_id}/catalogs",
     response_model=List[Catalog],
     status_code=status.HTTP_200_OK,
     tags=["Catalogs"],
@@ -69,7 +69,7 @@ def get_catalogos_by_board(board_id: int, session: SessionDep):
 
 
 @router.get(
-    "/catalogos/{catalogo_id}",
+    "/catalogs/{catalogo_id}",
     response_model=Catalog,
     status_code=status.HTTP_200_OK,
     tags=["Catalogs"],
@@ -89,7 +89,7 @@ def get_catalogo(catalogo_id: int, session: SessionDep):
 
 
 @router.put(
-    "/catalogos/{catalogo_id}",
+    "/catalogs/{catalogo_id}",
     response_model=Catalog,
     status_code=status.HTTP_200_OK,
     tags=["Catalogs"],
@@ -119,7 +119,7 @@ def update_catalogo(catalogo_id: int, catalog: CatalogBase, session: SessionDep)
 
 
 @router.delete(
-    "/catalogos/{catalogo_id}",
+    "/catalogs/{catalogo_id}",
     response_model=Catalog,
     status_code=status.HTTP_200_OK,
     tags=["Catalogs"],
