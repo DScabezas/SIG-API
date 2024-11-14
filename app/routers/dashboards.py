@@ -63,7 +63,7 @@ def get_user_dashboard(user_id: int, session: SessionDep):
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
-    dashboard = user.dashboard  # El dashboard está relacionado con el usuario
+    dashboard = user.dashboard
     if not dashboard:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Dashboard not found"

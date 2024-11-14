@@ -131,7 +131,6 @@ def get_board_users(board_id: int, session: SessionDep):
             status_code=status.HTTP_404_NOT_FOUND, detail="Board not found"
         )
 
-    # Obtener todos los usuarios admitidos en el Board
     users = session.exec(
         select(User).join(BoardUsers).where(BoardUsers.board_id == board_id)
     ).all()
