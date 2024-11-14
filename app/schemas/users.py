@@ -1,3 +1,5 @@
+from typing import List, Optional
+
 from app.models.boards import Board
 from ..models.users import UserBase
 
@@ -7,5 +9,5 @@ class UserUpdate(UserBase):
 
 
 class UserRead(UserBase):
-    pass
-    boards: list["Board"]
+    id: int
+    boards: Optional[List[Board]] = []

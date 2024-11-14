@@ -10,7 +10,7 @@ class DashboardBase(SQLModel):
 class Dashboard(DashboardBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
 
-    user: "User" = Relationship(back_populates="dashboard")
+    users: "User" = Relationship(back_populates="dashboard")
     boards: List["Board"] = Relationship(
         back_populates="dashboards", link_model=DBoards
     )
