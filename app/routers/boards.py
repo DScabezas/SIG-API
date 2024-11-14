@@ -34,7 +34,7 @@ def create_board_for_users(board_data: BoardCreateUsers, session: SessionDep):
 
 
 @router.get("/boards/{board_id}", response_model=BoardRead, tags=["Boards"])
-def get_board_handler(board_id: int, session: SessionDep) -> BoardRead:
+def get_board_handler(board_id: int, session: SessionDep):
     """
     Obtiene un board por su ID.
     """
@@ -70,7 +70,7 @@ def delete_board_handler(board_id: int, session: SessionDep) -> None:
     status_code=status.HTTP_200_OK,
     tags=["Boards"],
 )
-def list_boards_handler(session: SessionDep) -> List[BoardRead]:
+def list_boards_handler(session: SessionDep):
     """
     Lista todos los boards en la base de datos.
     """
