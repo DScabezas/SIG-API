@@ -1,9 +1,9 @@
+from typing import Optional
 from sqlmodel import SQLModel, Field
 
 
 class DBoards(SQLModel, table=True):
-    board_id: int = Field(default=None, foreign_key="board.id", primary_key=True)
-    dashboard_id: int = Field(
-        default=None, foreign_key="dashboard.id", primary_key=True
-    )
-    user_id: int = Field(default=None, foreign_key="user.id", primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    board_id: Optional[int] = Field(foreign_key="board.id")
+    dashboard_id: Optional[int] = Field(foreign_key="dashboard.id")
+    user_id: Optional[int] = Field(foreign_key="user.id")
