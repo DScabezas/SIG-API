@@ -1,53 +1,37 @@
 from typing import List
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 from app.db import SessionDep
-from sqlmodel import select
-from app.models.boards import Board
-from app.models.dboards import DBoards
-from app.models.users import User, UserBase
-from app.schemas.users import UserRead, UserUpdate
+from app.schemas.users import UserRead, UserBase, UserUpdate
+from app.crud.users import (
+    create_user,
+    get_user,
+    list_users,
+    update_user,
+    delete_user,
+    get_board_users,
+)
 
 router = APIRouter()
 
 
 @router.post(
-    "/users/", response_model=User, status_code=status.HTTP_201_CREATED, tags=["Users"]
+    "/users/",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Users"],
 )
-def create_user(user: UserBase, session: SessionDep) -> User:
-    """
-    Crea un nuevo usuario en la base de datos.
-
-    - **user**: Esquema de entrada que contiene los datos del usuario a crear, consultar modelos para estructura
-
-    Retorna el usuario creado con un código de estado 201.
-    """
-    db_user = User(name=user.name, description=user.description, email=user.email)
-    session.add(db_user)
-    session.commit()
-    session.refresh(db_user)
-    return db_user
+def create_user_handler(user: UserBase, session: SessionDep):
+    return create_user(user, session)
 
 
 @router.get(
     "/users/{user_id}",
-    response_model=User,
+    response_model=UserRead,
     status_code=status.HTTP_200_OK,
     tags=["Users"],
 )
-def get_user(user_id: int, session: SessionDep) -> User:
-    """
-    Obtiene un usuario por su ID.
-
-    - **user_id**: ID del usuario a recuperar.
-
-    Retorna el usuario si es encontrado. Lanza una excepción 404 si el usuario no existe.
-    """
-    db_user = session.exec(select(User).where(User.id == user_id)).first()
-    if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    return db_user
+def get_user_handler(user_id: int, session: SessionDep):
+    return get_user(user_id, session)
 
 
 @router.get(
@@ -56,87 +40,27 @@ def get_user(user_id: int, session: SessionDep) -> User:
     status_code=status.HTTP_200_OK,
     tags=["Users"],
 )
-def list_users(session: SessionDep) -> List[UserRead]:
-    """
-    Lista todos los usuarios en la base de datos, incluyendo sus boards asociados.
-    """
-    users = session.exec(select(User)).all()
-    return users
+def list_users_handler(session: SessionDep):
+    return list_users(session)
 
 
-@router.put(
-    "/users/{user_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    tags=["Users"],
-)
-def update_user(user_id: int, user: UserUpdate, session: SessionDep) -> None:
-    """
-    Actualiza un usuario existente en la base de datos.
-
-    - **user_id**: ID del usuario a actualizar.
-    - **user**: Esquema de actualización con los campos a modificar.
-
-    No retorna contenido. Lanza una excepción 404 si el usuario no existe.
-    """
-    db_user = session.exec(select(User).where(User.id == user_id)).first()
-    if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    user_data = user.model_dump(exclude_unset=True)
-
-    if not user_data:
-        return
-
-    for key, value in user_data.items():
-        setattr(db_user, key, value)
-
-    session.commit()
-    session.refresh(db_user)
-
-    return
+@router.put("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Users"])
+def update_user_handler(user_id: int, user: UserUpdate, session: SessionDep):
+    update_user(user_id, user, session)
 
 
 @router.delete(
     "/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Users"]
 )
-def delete_user(user_id: int, session: SessionDep) -> None:
-    """
-    Elimina un usuario de la base de datos.
-
-    - **user_id**: ID del usuario a eliminar.
-
-    Retorna un código de estado 204 si el usuario es eliminado. Lanza una excepción 404 si el usuario no existe.
-    """
-    db_user = session.exec(select(User).where(User.id == user_id)).first()
-    if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    session.delete(db_user)
-    session.commit()
-    return
+def delete_user_handler(user_id: int, session: SessionDep):
+    delete_user(user_id, session)
 
 
 @router.get(
     "/board/{board_id}/users",
-    response_model=List[User],
+    response_model=List[UserRead],
     status_code=status.HTTP_200_OK,
     tags=["Users", "Boards"],
 )
-def get_board_users(board_id: int, session: SessionDep) -> List[User]:
-    """
-    Obtiene todos los usuarios admitidos para un Board específico.
-    """
-    board = session.exec(select(Board).where(Board.id == board_id)).first()
-    if not board:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Board not found"
-        )
-
-    db_boardusers = session.exec(
-        select(User).join(DBoards).where(DBoards.board_id == board_id)
-    ).all()
-    return db_boardusers
+def get_board_users_handler(board_id: int, session: SessionDep):
+    return get_board_users(board_id, session)
