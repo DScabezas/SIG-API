@@ -11,7 +11,7 @@ class BoardBase(SQLModel):
 class Board(BoardBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     users: List["User"] = Relationship(back_populates="boards", link_model=BoardUsers)
-    catalogos: List["Catalogo"] = Relationship(back_populates="board")
+    catalogos: List["Catalog"] = Relationship(back_populates="board")
     dashboards: List["Dashboard"] = Relationship(
         back_populates="boards", link_model=DBoards
     )
