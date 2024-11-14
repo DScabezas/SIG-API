@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, status
 from app.db import SessionDep
 from sqlmodel import select
 from app.models.users import User, UserBase
-from app.schemas.users import UserUpdate
+from app.schemas.users import UserRead, UserUpdate
+from app.models.boards import Board
 
 router = APIRouter()
 
@@ -49,7 +50,7 @@ def get_user(user_id: int, session: SessionDep):
 
 @router.get(
     "/users/",
-    response_model=list[User],
+    response_model=list[UserRead],
     status_code=status.HTTP_200_OK,
     tags=["Users"],
 )
