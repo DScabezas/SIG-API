@@ -1,9 +1,18 @@
 from sqlmodel import Session, select
 from app.models.users import User
 from app.schemas.users import UserCreate, UserInfoRead
+from pydantic import BaseModel
 from uuid import UUID
 import requests
 from fastapi import HTTPException, status
+
+
+class DeleteUserRequest(BaseModel):
+    user_id: str
+
+
+class GetUserInfoRequest(BaseModel):
+    user_id: str
 
 
 def create_user(user_data: UserCreate, session: Session) -> User:
@@ -22,15 +31,6 @@ def create_user(user_data: UserCreate, session: Session) -> User:
 
 
 def authenticate_with_microsoft(token: str, session: Session) -> User:
-    """
-    Autentica a un usuario utilizando un token de Microsoft.
-
-    - **token**: Token de autenticación de Microsoft.
-
-    Retorna el usuario autenticado. Si no existe, crea un nuevo usuario con los datos obtenidos de Microsoft.
-
-    Si ocurre un error en la autenticación, lanza una excepción HTTP con el detalle del error.
-    """
     microsoft_url = "https://graph.microsoft.com/v1.0/me"
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -67,15 +67,15 @@ def authenticate_with_microsoft(token: str, session: Session) -> User:
         )
 
 
-def delete_user(user_id: str, session: Session) -> None:
+def delete_user(request: DeleteUserRequest, session: Session) -> None:
     """
     Elimina un usuario de la base de datos.
 
-    - **user_id**: ID del usuario a eliminar.
+    - **request**: Esquema con el ID del usuario a eliminar.
 
     Si el usuario no se encuentra, lanza una excepción HTTP 404.
-    Si ocurre un error en la eliminación, lanza una excepción HTTP 500.
     """
+    user_id = request.user_id
     try:
         user_id = UUID(user_id)
     except ValueError:
@@ -94,17 +94,15 @@ def delete_user(user_id: str, session: Session) -> None:
     session.commit()
 
 
-def get_user_info(user_id: str, session: Session) -> UserInfoRead:
+def get_user_info(request: GetUserInfoRequest, session: Session) -> UserInfoRead:
     """
     Obtiene la información de un usuario a partir de su ID.
 
-    - **user_id**: ID del usuario a consultar.
+    - **request**: Esquema con el ID del usuario a consultar.
 
     Retorna un objeto con la información del usuario en formato `UserInfoRead`.
-
-    Si el usuario no se encuentra, lanza una excepción HTTP 404.
-    Si ocurre un error, lanza una excepción HTTP 500.
     """
+    user_id = request.user_id
     try:
         user_id = UUID(user_id)
     except ValueError:
