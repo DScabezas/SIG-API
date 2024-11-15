@@ -1,67 +1,123 @@
-from typing import List
 from sqlmodel import Session, select
-from fastapi import HTTPException, status
-from app.models.dboards import DBoards
 from app.models.users import User
-from app.models.boards import Board
-from app.schemas.users import UserBase, UserUpdate
+from app.schemas.users import UserCreate, UserInfoRead
+from uuid import UUID
+import requests
+from fastapi import HTTPException, status
 
 
-def create_user(user_data: UserBase, session: Session) -> User:
-    db_user = User(
-        name=user_data.name, description=user_data.description, email=user_data.email
-    )
+def create_user(user_data: UserCreate, session: Session) -> User:
+    """
+    Crea un nuevo usuario en la base de datos.
+
+    - **user_data**: Datos del usuario a crear.
+
+    Retorna el usuario recién creado.
+    """
+    db_user = User(**user_data.model_dump())
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
     return db_user
 
 
-def get_user(user_id: int, session: Session) -> User:
-    db_user = session.exec(select(User).where(User.id == user_id)).first()
-    if not db_user:
+def authenticate_with_microsoft(token: str, session: Session) -> User:
+    """
+    Autentica a un usuario utilizando un token de Microsoft.
+
+    - **token**: Token de autenticación de Microsoft.
+
+    Retorna el usuario autenticado. Si no existe, crea un nuevo usuario con los datos obtenidos de Microsoft.
+
+    Si ocurre un error en la autenticación, lanza una excepción HTTP con el detalle del error.
+    """
+    microsoft_url = "https://graph.microsoft.com/v1.0/me"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    try:
+        response = requests.get(microsoft_url, headers=headers)
+        response.raise_for_status()
+        user_info = response.json()
+
+        user_data = {
+            "id": UUID(user_info["id"]),
+            "name": user_info.get("displayName"),
+            "email": user_info.get("mail"),
+            "given_name": user_info.get("givenName"),
+            "surname": user_info.get("surname"),
+            "job_title": user_info.get("jobTitle"),
+            "business_phone": user_info.get("businessPhones", [None])[0],
+            "mobile_phone": user_info.get("mobilePhone"),
+            "office_location": user_info.get("officeLocation"),
+        }
+
+        user = session.exec(select(User).where(User.id == user_data["id"])).first()
+
+        if not user:
+            user = create_user(UserCreate(**user_data), session)
+
+        return user
+    except requests.exceptions.RequestException:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Authentication failed"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+
+def delete_user(user_id: str, session: Session) -> None:
+    """
+    Elimina un usuario de la base de datos.
+
+    - **user_id**: ID del usuario a eliminar.
+
+    Si el usuario no se encuentra, lanza una excepción HTTP 404.
+    Si ocurre un error en la eliminación, lanza una excepción HTTP 500.
+    """
+    try:
+        user_id = UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid UUID format"
+        )
+
+    user = session.exec(select(User).where(User.id == user_id)).first()
+
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    return db_user
 
-
-def list_users(session: Session):
-    return session.exec(select(User)).all()
-
-
-def update_user(user_id: int, user_data: UserUpdate, session: Session) -> None:
-    db_user = session.exec(select(User).where(User.id == user_id)).first()
-    if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    update_data = user_data.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(db_user, key, value)
+    session.delete(user)
     session.commit()
-    session.refresh(db_user)
 
 
-def delete_user(user_id: int, session: Session) -> None:
-    db_user = session.exec(select(User).where(User.id == user_id)).first()
-    if not db_user:
+def get_user_info(user_id: str, session: Session) -> UserInfoRead:
+    """
+    Obtiene la información de un usuario a partir de su ID.
+
+    - **user_id**: ID del usuario a consultar.
+
+    Retorna un objeto con la información del usuario en formato `UserInfoRead`.
+
+    Si el usuario no se encuentra, lanza una excepción HTTP 404.
+    Si ocurre un error, lanza una excepción HTTP 500.
+    """
+    try:
+        user_id = UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid UUID format"
+        )
+
+    user = session.exec(select(User).where(User.id == user_id)).first()
+
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
-    session.delete(db_user)
-    session.commit()
-
-
-def get_board_users(board_id: int, session: Session):
-    board = session.exec(select(Board).where(Board.id == board_id)).first()
-    if not board:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Board not found"
-        )
-
-    return session.exec(
-        select(User).join(DBoards).where(DBoards.board_id == board_id)
-    ).all()
+    user_data = user.model_dump()
+    return UserInfoRead(**user_data)
