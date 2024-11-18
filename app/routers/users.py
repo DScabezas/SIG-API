@@ -72,15 +72,16 @@ def delete_user_handler(user_id: str, session: SessionDep):
     status_code=status.HTTP_200_OK,
     tags=["Users"],
 )
-def get_user_handler(user_id: str, session: SessionDep):
+def get_user_handler(request: GetUserInfoRequest, session: SessionDep):
     """
     Obtiene la información de un usuario a partir de su ID.
 
-    - **request**: JSON con el ID del usuario a consultar.
+    - **request**: JSON con el ID del usuario a consultar (enviado desde el frontend).
     - **response**: Retorna un objeto con la información del usuario.
     """
     try:
-        return get_user_info(user_id, session=session)
+        # Se pasa el `request` directamente, porque `request.user_id` contiene el `localAccountId`
+        return get_user_info(request, session=session)
     except HTTPException as e:
         raise e
     except Exception as e:
