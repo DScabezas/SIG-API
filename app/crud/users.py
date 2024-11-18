@@ -67,7 +67,10 @@ def authenticate_with_microsoft(token: str, session: Session) -> User:
         )
 
 
-def delete_user(request: DeleteUserRequest, session: Session) -> None:
+from uuid import UUID
+
+
+def delete_user(user_id: str, session: Session) -> None:
     """
     Elimina un usuario de la base de datos.
 
