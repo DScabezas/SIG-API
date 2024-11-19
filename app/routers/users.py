@@ -49,14 +49,14 @@ def create_user_handler(auth_request: MicrosoftAuthRequest, session: SessionDep)
     status_code=status.HTTP_204_NO_CONTENT,
     tags=["Users"],
 )
-def delete_user_handler(user_id: str, session: SessionDep):
+def delete_user_handler(delete_request: DeleteUserRequest, session: SessionDep):
     """
     Ruta para eliminar un usuario de la base de datos por su ID.
 
-    - **request**: JSON con el ID del usuario a eliminar.
+    - **delete_request**: JSON con el ID del usuario a eliminar.
     """
     try:
-        delete_user(user_id, session=session)
+        delete_user(delete_request.user_id, session=session)
     except HTTPException as e:
         raise e
     except Exception as e:

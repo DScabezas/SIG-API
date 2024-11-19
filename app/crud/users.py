@@ -74,11 +74,10 @@ def delete_user(user_id: str, session: Session) -> None:
     """
     Elimina un usuario de la base de datos.
 
-    - **request**: Esquema con el ID del usuario a eliminar.
+    - **user_id**: ID del usuario a eliminar.
 
     Si el usuario no se encuentra, lanza una excepción HTTP 404.
     """
-    user_id = request.user_id
     try:
         user_id = UUID(user_id)
     except ValueError:
