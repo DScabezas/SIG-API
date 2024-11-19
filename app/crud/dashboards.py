@@ -1,10 +1,11 @@
+import uuid
 from sqlmodel import Session, select
 from fastapi import HTTPException, status
 from app.models.users import User
 from app.models.dashboards import Dashboard
 
 
-def create_dashboard(user_id: int, session: Session) -> Dashboard:
+def create_dashboard(user_id: uuid.UUID, session: Session) -> Dashboard:
     """
     Crea un nuevo dashboard para un usuario.
     """
@@ -26,7 +27,7 @@ def create_dashboard(user_id: int, session: Session) -> Dashboard:
     return dashboard
 
 
-def get_user_dashboard(user_id: int, session: Session) -> Dashboard:
+def get_user_dashboard(user_id: uuid.UUID, session: Session) -> Dashboard:
     """
     Obtiene el Dashboard de un Usuario.
     """
