@@ -24,7 +24,7 @@ class MicrosoftAuthRequest(SQLModel):
 
 @router.post(
     "/auth/microsoft",
-    response_model=UserRead,
+    response_model=UserInfoRead,
     status_code=status.HTTP_200_OK,
     tags=["Users"],
 )
@@ -80,7 +80,6 @@ def get_user_handler(request: GetUserInfoRequest, session: SessionDep):
     - **response**: Retorna un objeto con la información del usuario.
     """
     try:
-        # Se pasa el `request` directamente, porque `request.user_id` contiene el `localAccountId`
         return get_user_info(request, session=session)
     except HTTPException as e:
         raise e

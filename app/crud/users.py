@@ -30,7 +30,7 @@ def create_user(user_data: UserCreate, session: Session) -> User:
     return db_user
 
 
-def authenticate_with_microsoft(token: str, session: Session) -> User:
+def authenticate_with_microsoft(token: str, session: Session) -> UserInfoRead:
     microsoft_url = "https://graph.microsoft.com/v1.0/me"
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -65,9 +65,6 @@ def authenticate_with_microsoft(token: str, session: Session) -> User:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
-
-
-from uuid import UUID
 
 
 def delete_user(user_id: str, session: Session) -> None:
