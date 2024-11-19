@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/dashboards/",
+    "/dashboards/user/{user_id}",
     response_model=DashboardRead,
     status_code=status.HTTP_201_CREATED,
     tags=["Dashboards"],
