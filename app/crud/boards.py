@@ -1,4 +1,5 @@
 from typing import List
+import uuid
 from app.models.boards import Board
 from app.models.dboards import DBoards
 from app.models.dashboards import Dashboard
@@ -153,3 +154,13 @@ def list_boards(session: Session):
     """
     boards = session.exec(select(Board)).all()
     return boards
+
+
+def list_boards_user(userId: uuid.UUID, session: Session):
+    """
+    Lista todos los Dboards del usuario especificado.
+
+    Retorna una lista de los Dboards con la estructura definida en el esquema DboardRead.
+    """
+    dboards = session.exec(select(Board).where(Board.user_id == userId)).all()
+    return dboards

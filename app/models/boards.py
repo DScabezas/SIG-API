@@ -1,3 +1,4 @@
+import uuid
 from sqlmodel import SQLModel, Field, Relationship
 from typing import List, Optional
 from app.models.dboards import DBoards
@@ -6,6 +7,7 @@ from app.models.dboards import DBoards
 class BoardBase(SQLModel):
     name: str
     icon: str
+    user_id: uuid.UUID = Field(default_factory=uuid.uuid4, foreign_key="user.id")
 
 
 class Board(BoardBase, table=True):
