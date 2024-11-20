@@ -1,4 +1,5 @@
 from typing import List
+import uuid
 from app.models.boards import BoardBase
 
 
@@ -11,8 +12,9 @@ class BoardRead(BoardBase):
 
 
 class BoardCreate(BoardBase):
+    user_id: uuid.UUID
     pass
 
 
 class BoardCreateUsers(BoardBase):
-    user_ids: List[int]
+    user_ids: List[uuid.UUID]

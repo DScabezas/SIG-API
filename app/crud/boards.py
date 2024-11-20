@@ -6,10 +6,10 @@ from app.models.users import User
 from sqlmodel import Session, select
 from fastapi import HTTPException, status
 
-from app.schemas.boards import BoardCreate, BoardCreateUsers, BoardRead
+from app.schemas.boards import BoardCreate, BoardCreateUsers
 
 
-def create_board(user_id: int, board_data: BoardCreate, session: Session):
+def create_board(board_data: BoardCreate, session: Session):
     """
     Crea un nuevo Board y lo asocia al usuario especificado en la tabla DBoards.
 
@@ -18,12 +18,12 @@ def create_board(user_id: int, board_data: BoardCreate, session: Session):
 
     Retorna el board creado.
     """
-    user = session.exec(select(User).where(User.id == user_id)).first()
+    user = session.exec(select(User).where(User.id == board_data.user_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     dashboard = session.exec(
-        select(Dashboard).where(Dashboard.user_id == user_id)
+        select(Dashboard).where(Dashboard.user_id == board_data.user_id)
     ).first()
     if not dashboard:
         raise HTTPException(status_code=404, detail="User has no dashboard")
@@ -33,7 +33,11 @@ def create_board(user_id: int, board_data: BoardCreate, session: Session):
     session.commit()
     session.refresh(board)
 
-    session.add(DBoards(board_id=board.id, dashboard_id=dashboard.id, user_id=user_id))
+    session.add(
+        DBoards(
+            board_id=board.id, dashboard_id=dashboard.id, user_id=board_data.user_id
+        )
+    )
     session.commit()
 
     return board

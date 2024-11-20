@@ -1,3 +1,4 @@
+import uuid
 from fastapi import APIRouter, status
 from typing import List
 from app.crud.boards import (
@@ -15,20 +16,24 @@ from app.schemas.boards import BoardCreate, BoardCreateUsers, BoardRead, BoardUp
 router = APIRouter()
 
 
-@router.post("/boards/{user_id}/", status_code=status.HTTP_201_CREATED, tags=["Boards"])
-def create_board_for_single_user(
-    user_id: int, board_data: BoardCreate, session: SessionDep
-):
+@router.post(
+    "/boards/single-user/", status_code=status.HTTP_201_CREATED, tags=["Boards"]
+)
+def create_board_for_single_user(board_data: BoardCreate, session: SessionDep):
     """
     Crea un nuevo Board y lo asocia al usuario especificado.
+    El user_id debe ser enviado como parte del cuerpo del JSON.
     """
-    return create_board(user_id, board_data, session)
+    return create_board(board_data, session)
 
 
-@router.post("/boards/", status_code=status.HTTP_201_CREATED, tags=["Boards"])
+@router.post(
+    "/boards/multiple-users/", status_code=status.HTTP_201_CREATED, tags=["Boards"]
+)
 def create_board_for_users(board_data: BoardCreateUsers, session: SessionDep):
     """
-    Crea un nuevo Board y lo asocia con cada uno de los usuarios especificados en la lista de user_ids.
+    Crea un nuevo Board y lo asocia con los usuarios especificados.
+    Una lista de user_ids deben ser enviados como parte del cuerpo del JSON.
     """
     return create_boards(board_data, session)
 
