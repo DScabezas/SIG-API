@@ -28,7 +28,7 @@ def create_board(board_data: BoardCreate, session: Session):
     if not dashboard:
         raise HTTPException(status_code=404, detail="User has no dashboard")
 
-    board = Board(name=board_data.name)
+    board = Board(**board_data.model_dump())
     session.add(board)
     session.commit()
     session.refresh(board)

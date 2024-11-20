@@ -5,6 +5,7 @@ from app.models.dboards import DBoards
 
 class BoardBase(SQLModel):
     name: str
+    icon: str
 
 
 class Board(BoardBase, table=True):
