@@ -127,3 +127,12 @@ def get_all_users(session: Session):
     """
     users = session.exec(select(User)).all()
     return users
+
+
+def count_users(session: Session):
+    """
+    Devuelve el número de usuarios activos registrados en la base de datos.
+    Utiliza exec para obtener el conteo de usuarios.
+    """
+    result = session.exec(select(User)).all()
+    return len(result)

@@ -5,6 +5,7 @@ from app.models.users import UserBase
 from app.schemas.users import UserInfoRead, UserRead
 from app.crud.users import (
     authenticate_with_microsoft,
+    count_users,
     delete_user,
     get_all_users,
     get_user_info,
@@ -106,3 +107,18 @@ def get_all_users_handler(session: SessionDep):
     """
     users = get_all_users(session=session)
     return users
+
+
+@router.get(
+    "/users/active",
+    response_model=int,
+    status_code=status.HTTP_200_OK,
+    tags=["Users"],
+)
+def get_active_users_count(session: SessionDep):
+    """
+    Ruta para obtener el número de usuarios activos registrados en la base de datos.
+
+    - **response**: Retorna el número de usuarios activos.
+    """
+    return count_users(session)
