@@ -1,6 +1,7 @@
 from typing import List
 import uuid
 from app.models.boards import BoardBase
+from app.models.users import User
 
 
 class BoardUpdate(BoardBase):
@@ -8,6 +9,7 @@ class BoardUpdate(BoardBase):
 
 
 class BoardRead(BoardBase):
+    users: List[User]
     pass
 
 

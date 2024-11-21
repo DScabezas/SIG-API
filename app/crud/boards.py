@@ -48,7 +48,7 @@ def create_boards(board_data: BoardCreateUsers, session: Session):
     """
     Crea un único Board y lo asocia con cada uno de los usuarios especificados en la lista de user_ids.
     """
-    board = Board(name=board_data.name)
+    board = Board(**board_data.model_dump())
     session.add(board)
     session.commit()
     session.refresh(board)
@@ -67,7 +67,6 @@ def create_boards(board_data: BoardCreateUsers, session: Session):
             raise HTTPException(
                 status_code=404, detail=f"User with id {user_id} has no dashboard"
             )
-
         session.add(
             DBoards(board_id=board.id, dashboard_id=dashboard.id, user_id=user_id)
         )
@@ -156,11 +155,13 @@ def list_boards(session: Session):
     return boards
 
 
-def list_boards_user(userId: uuid.UUID, session: Session):
+def list_boards_user(user_id: uuid.UUID, session: Session) -> List[Board]:
     """
-    Lista todos los Dboards del usuario especificado.
-
-    Retorna una lista de los Dboards con la estructura definida en el esquema DboardRead.
+    Obtiene los boards asociados a un usuario específico.
     """
-    dboards = session.exec(select(Board).where(Board.user_id == userId)).all()
-    return dboards
+    boards = list(
+        session.exec(
+            select(Board).join(DBoards).join(User).where(User.id == user_id)
+        ).all()
+    )
+    return boards

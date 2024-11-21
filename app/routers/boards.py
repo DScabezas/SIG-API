@@ -14,6 +14,7 @@ from app.crud.boards import (
 from app.db import SessionDep
 from app.models.boards import Board
 from app.schemas.boards import BoardCreate, BoardCreateUsers, BoardRead, BoardUpdate
+from app.schemas.users import UserRead, UserReadBoards
 
 router = APIRouter()
 
@@ -79,19 +80,19 @@ def delete_board_handler(board_id: int, session: SessionDep) -> None:
 )
 def list_boards_handler(session: SessionDep):
     """
-    Lista todos los boards en la base de datos.
+    Lista todos los boards en la base de datos, incluyendo los usuarios asociados.
     """
     return list_boards(session)
 
 
 @router.get(
     "/boards/user/{user_id}",
-    response_model=List[BoardRead],
+    response_model=List[Board],
     status_code=status.HTTP_200_OK,
     tags=["Boards"],
 )
-def list_boards_for_user(user_id: uuid.UUID, session: SessionDep):
+def list_boards_handler_user(user_id: uuid.UUID, session: SessionDep):
     """
-    Lista todos los Dboards del usuario especificado.
+    Lista todos los boards asociados a un usuario específico mediante su ID.
     """
     return list_boards_user(user_id, session)
