@@ -118,3 +118,12 @@ def get_user_info(request: GetUserInfoRequest, session: Session) -> UserInfoRead
 
     user_data = user.model_dump()
     return UserInfoRead(**user_data)
+
+
+def get_all_users(session: Session):
+    """
+    Devuelve todos los usuarios registrados en la base de datos.
+    Utiliza exec para obtener los usuarios.
+    """
+    users = session.exec(select(User)).all()
+    return users
