@@ -2,6 +2,7 @@ import uuid
 from fastapi import APIRouter, status
 from typing import List
 from app.crud.boards import (
+    count_board,
     create_board,
     create_boards,
     get_board,
@@ -14,7 +15,6 @@ from app.crud.boards import (
 from app.db import SessionDep
 from app.models.boards import Board
 from app.schemas.boards import BoardCreate, BoardCreateUsers, BoardRead, BoardUpdate
-from app.schemas.users import UserRead, UserReadBoards
 
 router = APIRouter()
 
@@ -96,3 +96,16 @@ def list_boards_handler_user(user_id: uuid.UUID, session: SessionDep):
     Lista todos los boards asociados a un usuario específico mediante su ID.
     """
     return list_boards_user(user_id, session)
+
+
+@router.get(
+    "/boards/count/",
+    response_model=int,
+    status_code=status.HTTP_200_OK,
+    tags=["Boards"],
+)
+def count_boards(session: SessionDep):
+    """
+    Lista todos los boards en la base de datos, incluyendo los usuarios asociados.
+    """
+    return count_board(session)
