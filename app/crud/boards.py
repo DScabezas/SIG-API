@@ -165,3 +165,14 @@ def list_boards_user(user_id: uuid.UUID, session: Session) -> List[Board]:
         ).all()
     )
     return boards
+
+
+def count_board(session: Session) -> int:
+    """
+    Cuenta el número total de boards en la base de datos.
+
+    - **session**: La sesión activa de la base de datos.
+    - **response**: Retorna el número total de boards.
+    """
+    boards = session.exec(select(Board)).all()
+    return len(boards)
