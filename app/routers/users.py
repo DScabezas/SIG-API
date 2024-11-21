@@ -1,10 +1,13 @@
 from fastapi import APIRouter, status, HTTPException
 from sqlmodel import SQLModel
 from app.db import SessionDep
+from app.models.users import UserBase
 from app.schemas.users import UserInfoRead, UserRead
 from app.crud.users import (
     authenticate_with_microsoft,
+    count_users,
     delete_user,
+    get_all_users,
     get_user_info,
     DeleteUserRequest,
     GetUserInfoRequest,
@@ -88,3 +91,34 @@ def get_user_handler(request: GetUserInfoRequest, session: SessionDep):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred: {str(e)}",
         )
+
+
+@router.get(
+    "/users",
+    response_model=list[UserBase],
+    status_code=status.HTTP_200_OK,
+    tags=["Users"],
+)
+def get_all_users_handler(session: SessionDep):
+    """
+    Ruta para obtener todos los usuarios registrados en la base de datos.
+
+    - **response**: Retorna una lista de todos los usuarios.
+    """
+    users = get_all_users(session=session)
+    return users
+
+
+@router.get(
+    "/users/active",
+    response_model=int,
+    status_code=status.HTTP_200_OK,
+    tags=["Users"],
+)
+def get_active_users_count(session: SessionDep):
+    """
+    Ruta para obtener el número de usuarios activos registrados en la base de datos.
+
+    - **response**: Retorna el número de usuarios activos.
+    """
+    return count_users(session)
