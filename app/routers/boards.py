@@ -13,7 +13,6 @@ from app.crud.boards import (
     delete_dboard,
 )
 from app.db import SessionDep
-from app.models.boards import Board
 from app.schemas.boards import BoardCreate, BoardCreateUsers, BoardRead, BoardUpdate
 
 router = APIRouter()
@@ -87,7 +86,7 @@ def list_boards_handler(session: SessionDep):
 
 @router.get(
     "/boards/user/{user_id}",
-    response_model=List[Board],
+    response_model=List[BoardRead],
     status_code=status.HTTP_200_OK,
     tags=["Boards"],
 )

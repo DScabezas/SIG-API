@@ -14,6 +14,7 @@ class UserRead(UserBase):
 
 
 class UserInfoRead(UserBase):
+    id: UUID
     pass
 
 
