@@ -9,6 +9,7 @@ class BoardUpdate(BoardBase):
 
 
 class BoardRead(BoardBase):
+    id: int
     users: List[User]
     pass
 
