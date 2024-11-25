@@ -1,6 +1,5 @@
 from typing import List, Optional
 from uuid import UUID
-
 from app.models.boards import Board
 from ..models.users import UserBase
 
@@ -15,6 +14,7 @@ class UserRead(UserBase):
 
 
 class UserInfoRead(UserBase):
+    id: UUID
     pass
 
 

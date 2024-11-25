@@ -30,7 +30,7 @@ def create_user(user_data: UserCreate, session: Session) -> User:
     return db_user
 
 
-def authenticate_with_microsoft(token: str, session: Session) -> UserInfoRead:
+def authenticate_with_microsoft(token: str, session: Session) -> User:
     microsoft_url = "https://graph.microsoft.com/v1.0/me"
     headers = {"Authorization": f"Bearer {token}"}
 
@@ -57,6 +57,7 @@ def authenticate_with_microsoft(token: str, session: Session) -> UserInfoRead:
             user = create_user(UserCreate(**user_data), session)
 
         return user
+
     except requests.exceptions.RequestException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Authentication failed"
@@ -118,3 +119,21 @@ def get_user_info(request: GetUserInfoRequest, session: Session) -> UserInfoRead
 
     user_data = user.model_dump()
     return UserInfoRead(**user_data)
+
+
+def get_all_users(session: Session):
+    """
+    Devuelve todos los usuarios registrados en la base de datos.
+    Utiliza exec para obtener los usuarios.
+    """
+    users = session.exec(select(User)).all()
+    return users
+
+
+def count_users(session: Session):
+    """
+    Devuelve el número de usuarios activos registrados en la base de datos.
+    Utiliza exec para obtener el conteo de usuarios.
+    """
+    result = session.exec(select(User)).all()
+    return len(result)
