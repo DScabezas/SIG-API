@@ -9,5 +9,5 @@ class CatalogBase(SQLModel):
 class Catalog(CatalogBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     board_id: Optional[int] = Field(foreign_key="board.id")
-    board: Optional["Board"] = Relationship(back_populates="catalogos")
+    board: Optional["Board"] = Relationship(back_populates="catalogs")
     kpis: List["Kpi"] = Relationship(back_populates="catalog")
