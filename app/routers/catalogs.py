@@ -88,7 +88,7 @@ def get_catalogo(catalogo_id: int, session: SessionDep):
     return catalog
 
 
-@router.put(
+@router.patch(
     "/catalogs/{catalogo_id}",
     response_model=Catalog,
     status_code=status.HTTP_200_OK,
@@ -97,9 +97,6 @@ def get_catalogo(catalogo_id: int, session: SessionDep):
 def update_catalogo(catalogo_id: int, catalog: CatalogBase, session: SessionDep):
     """
     Actualiza un catálogo por su ID.
-
-    - **catalogo_id**: ID del catálogo a actualizar.
-    - **catalog**: Objeto CatalogoBase con los datos actualizados.
     """
     catalog_to_update = session.exec(
         select(Catalog).where(Catalog.id == catalogo_id)

@@ -5,6 +5,8 @@ from app.db import SessionDep
 from sqlmodel import select
 from typing import List
 
+from app.schemas.kpis import MoveKpiRequest, PositionUpdate
+
 router = APIRouter()
 
 
@@ -132,3 +134,47 @@ def delete_kpi(kpi_id: int, session: SessionDep):
     session.commit()
 
     return kpi
+
+
+@router.patch(
+    "/kpis/{kpi_id}/position",
+    response_model=Kpi,
+    status_code=status.HTTP_200_OK,
+    tags=["KPIs"],
+)
+def update_kpi_position(
+    kpi_id: int, position_data: PositionUpdate, session: SessionDep
+):
+    kpi = session.exec(select(Kpi).where(Kpi.id == kpi_id)).first()
+    if not kpi:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="KPI not found"
+        )
+
+    kpi.position_index = position_data.position_index
+    session.add(kpi)
+    session.commit()
+    session.refresh(kpi)
+
+    return kpi
+
+
+@router.patch("/kpis/{kpi_id}/move", status_code=200)
+async def move_kpi_to_another_catalog(
+    kpi_id: int, kpi_data: MoveKpiRequest, session: SessionDep
+):
+    kpi = session.exec(select(Kpi).where(Kpi.id == kpi_id)).first()
+    if not kpi:
+        raise HTTPException(status_code=404, detail="KPI not found")
+
+    if kpi.catalog_id != kpi_data.new_catalog_id:
+        kpi.catalog_id = kpi_data.new_catalog_id
+
+    session.commit()
+    session.refresh(kpi)
+
+    return {
+        "message": "KPI moved successfully",
+        "kpi_id": kpi.id,
+        "new_catalog_id": kpi.catalog_id,
+    }
