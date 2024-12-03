@@ -1,7 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.db import create_all_tables
-from app.routers import boards, users, catalogs, dashboards, kpis
+from app.routers import (
+    boards,
+    records,
+    users,
+    catalogs,
+    dashboards,
+    kpis,
+)
 
 app = FastAPI(lifespan=create_all_tables)
 
@@ -13,13 +21,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(users.router)
-app.include_router(boards.router)
-app.include_router(catalogs.router)
-app.include_router(dashboards.router)
-app.include_router(kpis.router)
+routers = [
+    users.router,
+    boards.router,
+    catalogs.router,
+    dashboards.router,
+    kpis.router,
+    records.router,
+]
+
+for router in routers:
+    app.include_router(router)
 
 
 @app.get("/", tags=["Root"])
 async def root():
+    """
+    Endpoint raíz de la aplicación FastAPI.
+
+    Retorna un mensaje JSON simple para confirmar que la API está en funcionamiento.
+    """
     return {"message": "Hola, Mundo!"}

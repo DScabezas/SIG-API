@@ -1,40 +1,13 @@
 from fastapi import APIRouter, HTTPException, status
-from app.models.kpis import Kpi, KpiBase
-from app.models.catalogs import Catalog
-from app.db import SessionDep
 from sqlmodel import select
 from typing import List
 
-from app.schemas.kpis import MoveKpiRequest, PositionUpdate
+from app.db import SessionDep
+from app.models.kpis import Kpi, KpiBase
+from app.models.catalogs import Catalog
+from app.schemas.kpis import KpiRead, MoveKpiRequest, PositionUpdate
 
 router = APIRouter()
-
-
-@router.post(
-    "/catalogs/{catalog_id}/kpis",
-    response_model=Kpi,
-    status_code=status.HTTP_201_CREATED,
-    tags=["KPIs"],
-)
-def create_catalog_kpi(catalog_id: int, kpi_data: KpiBase, session: SessionDep):
-    """
-    Crea un nuevo KPI y lo asocia a un catálogo existente.
-
-    - **catalog_id**: ID del catálogo con el cual se asociará el KPI.
-    - **kpi_data**: Datos del KPI que se desea crear.
-    """
-    catalog = session.exec(select(Catalog).where(Catalog.id == catalog_id)).first()
-    if not catalog:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
-        )
-
-    kpi = Kpi(**kpi_data.model_dump(), catalog_id=catalog_id)
-    session.add(kpi)
-    session.commit()
-    session.refresh(kpi)
-
-    return kpi
 
 
 @router.get(
@@ -49,25 +22,6 @@ def get_all_kpis(session: SessionDep):
     """
     kpis = session.exec(select(Kpi)).all()
     return kpis
-
-
-@router.get(
-    "/catalogs/{catalog_id}/kpis",
-    response_model=List[Kpi],
-    status_code=status.HTTP_200_OK,
-    tags=["KPIs"],
-)
-def get_kpis_by_catalog(catalog_id: int, session: SessionDep):
-    """
-    Obtiene todos los KPIs asociados a un catálogo dado.
-    """
-    catalog = session.exec(select(Catalog).where(Catalog.id == catalog_id)).first()
-    if not catalog:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
-        )
-
-    return catalog.kpis
 
 
 @router.get(
@@ -145,6 +99,9 @@ def delete_kpi(kpi_id: int, session: SessionDep):
 def update_kpi_position(
     kpi_id: int, position_data: PositionUpdate, session: SessionDep
 ):
+    """
+    Actualiza la posición de un KPI.
+    """
     kpi = session.exec(select(Kpi).where(Kpi.id == kpi_id)).first()
     if not kpi:
         raise HTTPException(
@@ -159,10 +116,57 @@ def update_kpi_position(
     return kpi
 
 
+@router.post(
+    "/catalogs/{catalog_id}/kpis",
+    response_model=Kpi,
+    status_code=status.HTTP_201_CREATED,
+    tags=["KPIs"],
+)
+def create_catalog_kpi(catalog_id: int, kpi_data: KpiBase, session: SessionDep):
+    """
+    Crea un nuevo KPI y lo asocia a un catálogo existente.
+
+    - **catalog_id**: ID del catálogo con el cual se asociará el KPI.
+    - **kpi_data**: Datos del KPI que se desea crear.
+    """
+    catalog = session.exec(select(Catalog).where(Catalog.id == catalog_id)).first()
+
+    if not catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+
+    kpi = Kpi(**kpi_data.model_dump(), catalog_id=catalog_id)
+    session.add(kpi)
+    session.commit()
+    session.refresh(kpi)
+
+    return kpi
+
+
+@router.get(
+    "/catalogs/{catalog_id}/kpis",
+    response_model=List[KpiRead],
+    status_code=status.HTTP_200_OK,
+    tags=["KPIs"],
+)
+def get_kpis_by_catalog(catalog_id: int, session: SessionDep):
+    catalog = session.exec(select(Catalog).where(Catalog.id == catalog_id)).first()
+    if not catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+
+    return catalog.kpis
+
+
 @router.patch("/kpis/{kpi_id}/move", status_code=200)
 async def move_kpi_to_another_catalog(
     kpi_id: int, kpi_data: MoveKpiRequest, session: SessionDep
 ):
+    """
+    Mueve un KPI a otro catálogo.
+    """
     kpi = session.exec(select(Kpi).where(Kpi.id == kpi_id)).first()
     if not kpi:
         raise HTTPException(status_code=404, detail="KPI not found")
