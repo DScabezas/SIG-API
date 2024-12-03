@@ -1,6 +1,7 @@
 import uuid
 from sqlmodel import SQLModel, Field, Relationship
 from typing import List, Optional
+from app.models.catalogs import Catalog
 from app.models.dboards import DBoards
 from app.models.users import User
 
@@ -16,4 +17,4 @@ class Board(BoardBase, table=True):
         back_populates="boards", link_model=DBoards
     )
     users: List["User"] = Relationship(back_populates="boards", link_model=DBoards)
-    catalogos: List["Catalog"] = Relationship(back_populates="board")
+    catalogs: List["Catalog"] = Relationship(back_populates="board")
