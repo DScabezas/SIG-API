@@ -125,9 +125,6 @@ def update_kpi_position(
 def create_catalog_kpi(catalog_id: int, kpi_data: KpiBase, session: SessionDep):
     """
     Crea un nuevo KPI y lo asocia a un catálogo existente.
-
-    - **catalog_id**: ID del catálogo con el cual se asociará el KPI.
-    - **kpi_data**: Datos del KPI que se desea crear.
     """
     catalog = session.exec(select(Catalog).where(Catalog.id == catalog_id)).first()
 
@@ -136,7 +133,9 @@ def create_catalog_kpi(catalog_id: int, kpi_data: KpiBase, session: SessionDep):
             status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
         )
 
+    # El valor de position_index se debe tomar de los datos del frontend
     kpi = Kpi(**kpi_data.model_dump(), catalog_id=catalog_id)
+    print(kpi)
     session.add(kpi)
     session.commit()
     session.refresh(kpi)

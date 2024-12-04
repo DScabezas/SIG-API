@@ -8,7 +8,6 @@ from app.models.records import Records
 class KpiRead(KpiBase):
     id: int
     catalog_id: int
-    position_index: Optional[int]
     records: List["Records"]
 
 
