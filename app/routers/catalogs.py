@@ -1,86 +1,53 @@
-from fastapi import APIRouter, HTTPException, status
-from app.models.catalogs import CatalogBase, Catalog
-from app.models.boards import Board
-from app.db import SessionDep
+from typing import List, Optional, Annotated
+
+from fastapi import APIRouter, HTTPException, Depends, status
 from sqlmodel import select
-from typing import List
 
-router = APIRouter()
+from app.db import SessionDep
+from app.models.boards import Board
+from app.models.catalogs import Catalog, CatalogBase
+from app.models.kpis import Kpi, KpiBase
+from app.schemas.kpis import KpiRead
 
-
-@router.post(
-    "/boards/{board_id}/catalogs",
-    response_model=Catalog,
-    status_code=status.HTTP_201_CREATED,
-    tags=["Catalogs"],
-)
-def create_catalogo(board_id: int, catalog: CatalogBase, session: SessionDep):
-    """
-    Crea un nuevo catálogo para un board dado.
-
-    - **board_id**: ID del board al que se va a asociar el catálogo.
-    - **catalog**: Objeto CatalogoBase con los datos del catálogo.
-    """
-    board = session.exec(select(Board).where(Board.id == board_id)).first()
-    if not board:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Board not found"
-        )
-
-    catalogo = Catalog(**catalog.model_dump(), board_id=board_id)
-    session.add(catalogo)
-    session.commit()
-    session.refresh(catalogo)
-    return catalogo
+router = APIRouter(prefix="/catalogs", tags=["Catalogs"])
 
 
-@router.get(
-    "/catalogs",
-    response_model=List[Catalog],
-    status_code=status.HTTP_200_OK,
-    tags=["Catalogs"],
-)
-def get_catalogos(session: SessionDep):
+@router.get("/", response_model=List[Catalog], status_code=status.HTTP_200_OK)
+def get_catalogs(session: SessionDep):
     """
     Obtiene todos los catálogos disponibles.
     """
-    return session.exec(select(Catalog)).all()
+    catalogs = session.exec(select(Catalog)).all()
+    return catalogs
 
 
 @router.get(
-    "/boards/{board_id}/catalogs",
-    response_model=List[Catalog],
-    status_code=status.HTTP_200_OK,
-    tags=["Catalogs"],
+    "/boards/{board_id}/", response_model=List[Catalog], status_code=status.HTTP_200_OK
 )
-def get_catalogos_by_board(board_id: int, session: SessionDep):
+def get_catalogs_by_board(board_id: int, session: SessionDep):
     """
     Obtiene todos los catálogos de un board específico.
 
     - **board_id**: ID del board para filtrar los catálogos.
     """
-    board = session.exec(select(Board).where(Board.id == board_id)).first()
-    if not board:
+    board_exists = session.exec(select(Board.id).where(Board.id == board_id)).first()
+    if not board_exists:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Board not found"
         )
 
-    return session.exec(select(Catalog).where(Catalog.board_id == board_id)).all()
+    catalogs = session.exec(select(Catalog).where(Catalog.board_id == board_id)).all()
+    return catalogs
 
 
-@router.get(
-    "/catalogs/{catalogo_id}",
-    response_model=Catalog,
-    status_code=status.HTTP_200_OK,
-    tags=["Catalogs"],
-)
-def get_catalogo(catalogo_id: int, session: SessionDep):
+@router.get("/{catalog_id}", response_model=Catalog, status_code=status.HTTP_200_OK)
+def get_catalog(catalog_id: int, session: SessionDep):
     """
     Obtiene un catálogo por su ID.
 
-    - **catalogo_id**: ID del catálogo.
+    - **catalog_id**: ID del catálogo.
     """
-    catalog = session.exec(select(Catalog).where(Catalog.id == catalogo_id)).first()
+    catalog = session.exec(select(Catalog).where(Catalog.id == catalog_id)).first()
     if not catalog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
@@ -88,26 +55,25 @@ def get_catalogo(catalogo_id: int, session: SessionDep):
     return catalog
 
 
-@router.patch(
-    "/catalogs/{catalogo_id}",
-    response_model=Catalog,
-    status_code=status.HTTP_200_OK,
-    tags=["Catalogs"],
-)
-def update_catalogo(catalogo_id: int, catalog: CatalogBase, session: SessionDep):
+@router.patch("/{catalog_id}", response_model=Catalog, status_code=status.HTTP_200_OK)
+def update_catalog(catalog_id: int, catalog: CatalogBase, session: SessionDep):
     """
     Actualiza un catálogo por su ID.
+
+    - **catalog_id**: ID del catálogo a actualizar.
+    - **catalog**: Objeto CatalogBase con los datos actualizados.
     """
     catalog_to_update = session.exec(
-        select(Catalog).where(Catalog.id == catalogo_id)
+        select(Catalog).where(Catalog.id == catalog_id)
     ).first()
     if not catalog_to_update:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
         )
 
-    for var, value in catalog.model_dump(exclude_unset=True).items():
-        setattr(catalog_to_update, var, value)
+    update_data = catalog.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(catalog_to_update, key, value)
 
     session.add(catalog_to_update)
     session.commit()
@@ -115,20 +81,15 @@ def update_catalogo(catalogo_id: int, catalog: CatalogBase, session: SessionDep)
     return catalog_to_update
 
 
-@router.delete(
-    "/catalogs/{catalogo_id}",
-    response_model=Catalog,
-    status_code=status.HTTP_200_OK,
-    tags=["Catalogs"],
-)
-def delete_catalogo(catalogo_id: int, session: SessionDep):
+@router.delete("/{catalog_id}", response_model=Catalog, status_code=status.HTTP_200_OK)
+def delete_catalog(catalog_id: int, session: SessionDep):
     """
     Elimina un catálogo por su ID.
 
-    - **catalogo_id**: ID del catálogo a eliminar.
+    - **catalog_id**: ID del catálogo a eliminar.
     """
     catalog_to_delete = session.exec(
-        select(Catalog).where(Catalog.id == catalogo_id)
+        select(Catalog).where(Catalog.id == catalog_id)
     ).first()
     if not catalog_to_delete:
         raise HTTPException(
@@ -138,3 +99,52 @@ def delete_catalogo(catalogo_id: int, session: SessionDep):
     session.delete(catalog_to_delete)
     session.commit()
     return catalog_to_delete
+
+
+@router.post(
+    "/{catalog_id}/kpis",
+    response_model=Kpi,
+    status_code=status.HTTP_201_CREATED,
+    tags=["KPIs"],
+)
+def create_catalog_kpi(catalog_id: int, kpi_data: KpiBase, session: SessionDep):
+    """
+    Crea un nuevo KPI y lo asocia a un catálogo existente.
+
+    - **catalog_id**: ID del catálogo al que se asociará el KPI.
+    - **kpi_data**: Objeto KpiBase con los datos del KPI.
+    """
+    catalog_exists = session.exec(
+        select(Catalog.id).where(Catalog.id == catalog_id)
+    ).first()
+    if not catalog_exists:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+
+    kpi = Kpi(**kpi_data.model_dump(), catalog_id=catalog_id)
+    session.add(kpi)
+    session.commit()
+    session.refresh(kpi)
+    return kpi
+
+
+@router.get(
+    "/{catalog_id}/kpis",
+    response_model=List[KpiRead],
+    status_code=status.HTTP_200_OK,
+    tags=["KPIs"],
+)
+def get_kpis_by_catalog(catalog_id: int, session: SessionDep):
+    """
+    Obtiene todos los KPIs asociados a un catálogo específico.
+
+    - **catalog_id**: ID del catálogo para filtrar los KPIs.
+    """
+    catalog = session.exec(select(Catalog).where(Catalog.id == catalog_id)).first()
+    if not catalog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"
+        )
+
+    return catalog.kpis

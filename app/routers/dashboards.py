@@ -1,5 +1,8 @@
 import uuid
+from typing import List
+
 from fastapi import APIRouter, HTTPException, status
+
 from app.db import SessionDep
 from app.schemas.dahboards import DashboardCreate, DashboardRead
 from app.models.dashboards import Dashboard
@@ -39,12 +42,14 @@ def get_dashboard_by_user_handler(user_id: str, session: SessionDep) -> Dashboar
     Obtiene el Dashboard de un Usuario basado en un parámetro de ruta.
     """
     try:
-        return get_user_dashboard(uuid.UUID(user_id), session)
+        user_uuid = uuid.UUID(user_id)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid user_id format. Must be a valid UUID.",
+            detail="Formato de user_id inválido. Debe ser un UUID válido.",
         )
+
+    return get_user_dashboard(user_uuid, session)
 
 
 @router.delete(
@@ -57,15 +62,3 @@ def delete_dashboard_handler(dashboard_id: int, session: SessionDep) -> None:
     Elimina un Dashboard si no tiene ningún Board asociado.
     """
     delete_dashboard(dashboard_id, session)
-
-
-@router.get(
-    "/dashboards/",
-    response_model=list[DashboardRead],
-    tags=["Dashboards"],
-)
-def list_dashboards_handler(session: SessionDep):
-    """
-    Lista todos los dashboards con sus boards asociados.
-    """
-    return list_dashboards(session)

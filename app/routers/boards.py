@@ -1,6 +1,9 @@
 import uuid
-from fastapi import APIRouter, status
 from typing import List
+
+from fastapi import APIRouter, HTTPException, status, Depends
+from sqlmodel import select
+
 from app.crud.boards import (
     count_board,
     create_board,
@@ -13,24 +16,35 @@ from app.crud.boards import (
     delete_dboard,
 )
 from app.db import SessionDep
-from app.schemas.boards import BoardCreate, BoardCreateUsers, BoardRead, BoardUpdate
+from app.models.boards import Board
+from app.models.catalogs import Catalog, CatalogBase
+from app.schemas.boards import (
+    BoardCreate,
+    BoardCreateUsers,
+    BoardRead,
+    BoardUpdate,
+)
 
-router = APIRouter()
+router = APIRouter(tags=["Boards"], prefix="/boards")
 
 
 @router.post(
-    "/boards/single-user/", status_code=status.HTTP_201_CREATED, tags=["Boards"]
+    "/single-user/",
+    response_model=BoardRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a board for a single user",
+    description="Creates a new board and associates it with the specified user.",
 )
-def create_board_for_single_user(board_data: BoardCreate, session: SessionDep):
-    """
-    Crea un nuevo Board y lo asocia al usuario especificado.
-    El user_id debe ser enviado como parte del cuerpo del JSON.
-    """
+def create_board_for_single_user(board_data: BoardCreate, session: SessionDep) -> Board:
     return create_board(board_data, session)
 
 
 @router.post(
-    "/boards/multiple-users/", status_code=status.HTTP_201_CREATED, tags=["Boards"]
+    "/multiple-users/",
+    response_model=List[BoardRead],
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a board for multiple users",
+    description="Creates a new board and associates it with the specified list of users.",
 )
 def create_board_for_users(board_data: BoardCreateUsers, session: SessionDep):
     """
@@ -40,42 +54,48 @@ def create_board_for_users(board_data: BoardCreateUsers, session: SessionDep):
     return create_boards(board_data, session)
 
 
-@router.get("/boards/{board_id}", response_model=BoardRead, tags=["Boards"])
-def get_board_handler(board_id: int, session: SessionDep):
-    """
-    Obtiene un board por su ID.
-    """
+@router.get(
+    "/{board_id}",
+    response_model=BoardRead,
+    status_code=status.HTTP_200_OK,
+    summary="Get a board by ID",
+    description="Retrieves a board by its ID.",
+)
+def get_board_handler(board_id: int, session: SessionDep) -> Board:
     return get_board(board_id, session)
 
 
 @router.put(
-    "/boards/{board_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Boards"]
+    "/{board_id}",
+    response_model=BoardRead,
+    status_code=status.HTTP_200_OK,
+    summary="Update a board",
+    description="Updates an existing board with the provided data.",
 )
 def update_board_handler(
     board_id: int, board: BoardUpdate, session: SessionDep
-) -> None:
-    """
-    Actualiza un board existente.
-    """
+) -> Board:
     update_board(board_id, board, session)
+    return get_board(board_id, session)
 
 
 @router.delete(
-    "/boards/{board_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Boards"]
+    "/{board_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a board",
+    description="Deletes a board and its associated records in DBoards.",
 )
 def delete_board_handler(board_id: int, session: SessionDep) -> None:
-    """
-    Elimina un board de la base de datos, incluyendo los registros asociados en DBoards.
-    """
     delete_dboard(board_id, session)
     delete_board(board_id, session)
 
 
 @router.get(
-    "/boards/",
+    "/",
     response_model=List[BoardRead],
     status_code=status.HTTP_200_OK,
-    tags=["Boards"],
+    summary="List all boards",
+    description="Retrieves a list of all boards in the database.",
 )
 def list_boards_handler(session: SessionDep):
     """
@@ -85,26 +105,36 @@ def list_boards_handler(session: SessionDep):
 
 
 @router.get(
-    "/boards/user/{user_id}",
-    response_model=List[BoardRead],
-    status_code=status.HTTP_200_OK,
-    tags=["Boards"],
-)
-def list_boards_handler_user(user_id: uuid.UUID, session: SessionDep):
-    """
-    Lista todos los boards asociados a un usuario específico mediante su ID.
-    """
-    return list_boards_user(user_id, session)
-
-
-@router.get(
-    "/boards/count/",
+    "/count/",
     response_model=int,
     status_code=status.HTTP_200_OK,
-    tags=["Boards"],
+    summary="Count boards",
+    description="Returns the total number of boards in the database.",
 )
-def count_boards(session: SessionDep):
-    """
-    Lista todos los boards en la base de datos, incluyendo los usuarios asociados.
-    """
+def count_boards(session: SessionDep) -> int:
     return count_board(session)
+
+
+@router.post(
+    "/{board_id}/catalogs/",
+    response_model=Catalog,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a catalog for a board",
+    description="Creates a new catalog and associates it with the specified board.",
+)
+def create_catalog(
+    board_id: int,
+    catalog: CatalogBase,
+    session: SessionDep,
+) -> Catalog:
+    board = get_board(board_id, session)
+    if not board:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Board not found"
+        )
+
+    new_catalog = Catalog(**catalog.model_dump(), board_id=board_id)
+    session.add(new_catalog)
+    session.commit()
+    session.refresh(new_catalog)
+    return new_catalog
