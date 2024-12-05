@@ -5,6 +5,7 @@ from fastapi import APIRouter, status, HTTPException
 from sqlmodel import SQLModel
 
 from app.crud.boards import list_boards_user
+from app.crud.dashboards import create_dashboard, get_user_dashboard
 from app.crud.users import (
     authenticate_with_microsoft,
     count_users,
@@ -15,8 +16,10 @@ from app.crud.users import (
     GetUserInfoRequest,
 )
 from app.db import SessionDep
+from app.models.dashboards import Dashboard
 from app.models.users import UserBase
 from app.schemas.boards import BoardRead
+from app.schemas.dahboards import DashboardCreate, DashboardRead
 from app.schemas.users import UserInfoRead
 
 router = APIRouter()
@@ -152,3 +155,39 @@ def list_boards_handler_user(user_id: uuid.UUID, session: SessionDep):
     """
     boards = list_boards_user(user_id, session)
     return boards
+
+
+@router.post(
+    "/user/{user_id}/dashboards",
+    response_model=DashboardRead,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Dashboards"],
+)
+def create_dashboard_handler(
+    payload: DashboardCreate, session: SessionDep
+) -> Dashboard:
+    """
+    Crea un nuevo dashboard para un usuario basado en un JSON con el user_id.
+    """
+    return create_dashboard(payload.user_id, session)
+
+
+@router.get(
+    "/user/{user_id}/dashboards",
+    response_model=DashboardRead,
+    status_code=status.HTTP_200_OK,
+    tags=["Dashboards"],
+)
+def get_dashboard_by_user_handler(user_id: str, session: SessionDep) -> Dashboard:
+    """
+    Obtiene el Dashboard de un Usuario basado en un parámetro de ruta.
+    """
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Formato de user_id inválido. Debe ser un UUID válido.",
+        )
+
+    return get_user_dashboard(user_uuid, session)
