@@ -115,7 +115,7 @@ def update_kpi_position(
     return kpi
 
 
-@router.patch("/kpis/{kpi_id}/move", status_code=200)
+@router.patch("/kpis/{kpi_id}/move", status_code=200, tags=["KPIs"])
 async def move_kpi_to_another_catalog(
     kpi_id: int, kpi_data: MoveKpiRequest, session: SessionDep
 ):

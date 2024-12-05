@@ -1,55 +1,9 @@
-import uuid
-from typing import List
-
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 
 from app.db import SessionDep
-from app.schemas.dahboards import DashboardCreate, DashboardRead
-from app.models.dashboards import Dashboard
-from app.crud.dashboards import (
-    create_dashboard,
-    get_user_dashboard,
-    delete_dashboard,
-    list_dashboards,
-)
+from app.crud.dashboards import delete_dashboard
 
 router = APIRouter()
-
-
-@router.post(
-    "/dashboards/user/{user_id}",
-    response_model=DashboardRead,
-    status_code=status.HTTP_201_CREATED,
-    tags=["Dashboards"],
-)
-def create_dashboard_handler(
-    payload: DashboardCreate, session: SessionDep
-) -> Dashboard:
-    """
-    Crea un nuevo dashboard para un usuario basado en un JSON con el user_id.
-    """
-    return create_dashboard(payload.user_id, session)
-
-
-@router.get(
-    "/dashboards/user/{user_id}",
-    response_model=DashboardRead,
-    status_code=status.HTTP_200_OK,
-    tags=["Dashboards"],
-)
-def get_dashboard_by_user_handler(user_id: str, session: SessionDep) -> Dashboard:
-    """
-    Obtiene el Dashboard de un Usuario basado en un parámetro de ruta.
-    """
-    try:
-        user_uuid = uuid.UUID(user_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Formato de user_id inválido. Debe ser un UUID válido.",
-        )
-
-    return get_user_dashboard(user_uuid, session)
 
 
 @router.delete(
