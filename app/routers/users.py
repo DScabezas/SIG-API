@@ -17,7 +17,7 @@ from app.crud.users import (
 )
 from app.db import SessionDep
 from app.models.dashboards import Dashboard
-from app.models.users import UserBase
+from app.models.users import User
 from app.schemas.boards import BoardRead
 from app.schemas.dahboards import DashboardCreate, DashboardRead
 from app.schemas.users import UserInfoRead
@@ -109,7 +109,7 @@ def get_user_handler(request: GetUserInfoRequest, session: SessionDep) -> UserIn
 
 @router.get(
     "/users",
-    response_model=List[UserBase],
+    response_model=List[User],
     status_code=status.HTTP_200_OK,
     tags=["Users"],
 )

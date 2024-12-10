@@ -3,8 +3,8 @@ from sqlmodel import select
 from typing import List
 
 from app.db import SessionDep
-from app.models.kpis import Kpi, KpiBase
-from app.schemas.kpis import MoveKpiRequest, PositionUpdate
+from app.models.kpis import Kpi
+from app.schemas.kpis import KpiCreate, MoveKpiRequest, PositionUpdate
 
 router = APIRouter()
 
@@ -47,7 +47,7 @@ def get_kpi(kpi_id: int, session: SessionDep):
     status_code=status.HTTP_200_OK,
     tags=["KPIs"],
 )
-def update_kpi(kpi_id: int, kpi_data: KpiBase, session: SessionDep):
+def update_kpi(kpi_id: int, kpi_data: KpiCreate, session: SessionDep):
     """
     Actualiza un KPI por su ID.
     """

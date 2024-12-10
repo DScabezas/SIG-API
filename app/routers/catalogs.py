@@ -1,13 +1,13 @@
-from typing import List, Optional, Annotated
+from typing import List
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 
 from app.db import SessionDep
 from app.models.boards import Board
 from app.models.catalogs import Catalog, CatalogBase
-from app.models.kpis import Kpi, KpiBase
-from app.schemas.kpis import KpiRead
+from app.models.kpis import Kpi
+from app.schemas.kpis import KpiCreate, KpiRead
 
 router = APIRouter(prefix="/catalogs", tags=["Catalogs"])
 
@@ -107,7 +107,7 @@ def delete_catalog(catalog_id: int, session: SessionDep):
     status_code=status.HTTP_201_CREATED,
     tags=["KPIs"],
 )
-def create_catalog_kpi(catalog_id: int, kpi_data: KpiBase, session: SessionDep):
+def create_catalog_kpi(catalog_id: int, kpi_data: KpiCreate, session: SessionDep):
     """
     Crea un nuevo KPI y lo asocia a un catálogo existente.
 

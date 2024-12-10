@@ -2,14 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import create_all_tables
-from app.routers import (
-    boards,
-    records,
-    users,
-    catalogs,
-    dashboards,
-    kpis,
-)
+from app.routers import boards, records, users, catalogs, dashboards, kpis, utils
 
 app = FastAPI(lifespan=create_all_tables)
 
@@ -28,6 +21,7 @@ routers = [
     dashboards.router,
     kpis.router,
     records.router,
+    utils.router,
 ]
 
 for router in routers:
