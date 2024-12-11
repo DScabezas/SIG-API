@@ -8,7 +8,14 @@ from app.models.records import Records
 class KpiRead(KpiBase):
     id: int
     catalog_id: int
+    color_schema: int
+    chart_type: int
     records: List["Records"]
+
+
+class KpiCreate(KpiBase):
+    color_schema: int
+    chart_type: int
 
 
 class PositionUpdate(BaseModel):
