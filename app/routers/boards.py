@@ -10,7 +10,6 @@ from app.crud.boards import (
     create_boards,
     get_board,
     list_boards,
-    list_boards_user,
     update_board,
     delete_board,
     delete_dboard,

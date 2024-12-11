@@ -34,11 +34,7 @@ def create_board(board_data: BoardCreate, session: Session):
     session.commit()
     session.refresh(board)
 
-    session.add(
-        DBoards(
-            board_id=board.id, dashboard_id=dashboard.id, user_id=board_data.user_id
-        )
-    )
+    session.add(DBoards(board_id=board.id, user_id=board_data.user_id))
     session.commit()
 
     return board
@@ -67,9 +63,6 @@ def create_boards(board_data: BoardCreateUsers, session: Session):
             raise HTTPException(
                 status_code=404, detail=f"User with id {user_id} has no dashboard"
             )
-        session.add(
-            DBoards(board_id=board.id, dashboard_id=dashboard.id, user_id=user_id)
-        )
 
     session.commit()
 
@@ -91,12 +84,6 @@ def get_board(board_id: int, session: Session):
 
 
 def update_board(board_id: int, board_data, session: Session) -> None:
-    """
-    Actualiza un board existente.
-
-    - **board_id**: ID del board a actualizar.
-    - **board_data**: Datos de actualización para el board.
-    """
     db_board = session.exec(select(Board).where(Board.id == board_id)).first()
     if not db_board:
         raise HTTPException(
@@ -104,6 +91,12 @@ def update_board(board_id: int, board_data, session: Session) -> None:
         )
 
     db_board_data = board_data.model_dump(exclude_unset=True)
+    if "users" in db_board_data:
+        db_board_data["users"] = [
+            session.exec(select(User).where(User.id == uuid.UUID(user["id"]))).first()
+            for user in db_board_data["users"]
+        ]
+
     for key, value in db_board_data.items():
         setattr(db_board, key, value)
 

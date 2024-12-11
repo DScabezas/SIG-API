@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 import uuid
 from app.models.boards import BoardBase
 from app.models.catalogs import Catalog
@@ -6,6 +6,7 @@ from app.models.users import User
 
 
 class BoardUpdate(BoardBase):
+    users: List[User]
     pass
 
 

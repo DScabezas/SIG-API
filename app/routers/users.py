@@ -158,7 +158,7 @@ def list_boards_handler_user(user_id: uuid.UUID, session: SessionDep):
 
 
 @router.post(
-    "/user/{user_id}/dashboards",
+    "/users/{user_id}/dashboards",
     response_model=DashboardRead,
     status_code=status.HTTP_201_CREATED,
     tags=["Dashboards"],
@@ -173,7 +173,7 @@ def create_dashboard_handler(
 
 
 @router.get(
-    "/user/{user_id}/dashboards",
+    "/users/{user_id}/dashboards",
     response_model=DashboardRead,
     status_code=status.HTTP_200_OK,
     tags=["Dashboards"],
