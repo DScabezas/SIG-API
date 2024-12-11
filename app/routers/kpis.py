@@ -10,6 +10,20 @@ router = APIRouter()
 
 
 @router.get(
+    "/kpis/active",
+    response_model=int,
+    status_code=status.HTTP_200_OK,
+    tags=["KPIs"],
+)
+def count_all_kpis(session: SessionDep):
+    """
+    Obtiene todos los KPIs disponibles.
+    """
+    kpis = session.exec(select(Kpi)).all()
+    return len(kpis)
+
+
+@router.get(
     "/kpis",
     response_model=List[Kpi],
     status_code=status.HTTP_200_OK,
