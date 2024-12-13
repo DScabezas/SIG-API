@@ -49,12 +49,6 @@ def delete_dashboard(dashboard_id: int, session: Session) -> None:
     if not dashboard:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Dashboard not found")
 
-    if dashboard.boards:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Dashboard has associated boards and cannot be deleted",
-        )
-
     session.delete(dashboard)
     session.commit()
 

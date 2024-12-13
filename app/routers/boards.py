@@ -1,8 +1,6 @@
-import uuid
 from typing import List
 
-from fastapi import APIRouter, HTTPException, status, Depends
-from sqlmodel import select
+from fastapi import APIRouter, HTTPException, status
 
 from app.crud.boards import (
     count_board,
