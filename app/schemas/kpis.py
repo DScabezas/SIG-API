@@ -14,7 +14,8 @@ class KpiRead(KpiBase):
 
 
 class KpiCreate(KpiBase):
-    pass
+    color_schema: Optional[int]
+    chart_type: Optional[int]
 
 
 class PositionUpdate(BaseModel):
