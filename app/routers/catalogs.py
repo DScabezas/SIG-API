@@ -141,7 +141,9 @@ def get_kpis_by_catalog(catalog_id: int, session: SessionDep):
 
     - **catalog_id**: ID del catálogo para filtrar los KPIs.
     """
+
     catalog = session.exec(select(Catalog).where(Catalog.id == catalog_id)).first()
+    print(catalog)
     if not catalog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Catalog not found"

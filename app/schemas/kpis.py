@@ -7,15 +7,14 @@ from app.models.records import Records
 
 class KpiRead(KpiBase):
     id: int
-    catalog_id: int
-    color_schema: int
-    chart_type: int
     records: List["Records"]
+    color_schema: Optional[int]
+    chart_type: Optional[int]
+    catalog_id: Optional[int]
 
 
 class KpiCreate(KpiBase):
-    color_schema: int
-    chart_type: int
+    pass
 
 
 class PositionUpdate(BaseModel):
